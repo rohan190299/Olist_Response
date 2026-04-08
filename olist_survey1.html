@@ -1,0 +1,919 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Olist Dashboard — User Evaluation Survey</title>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* ── RESET & BASE ── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: 'Sora', sans-serif;
+  background: #f0f2f8;
+  color: #1a1d2e;
+  min-height: 100vh;
+  padding-bottom: 80px;
+}
+
+/* ── HERO HEADER ── */
+.hero {
+  background: linear-gradient(135deg, #0f1729 0%, #1a2d5a 45%, #0d3b8e 100%);
+  padding: 52px 24px 80px;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+.hero-rings {
+  position: absolute; inset: 0; overflow: hidden; pointer-events: none;
+}
+.hero-ring {
+  position: absolute; border-radius: 50%;
+  border: 1px solid rgba(99,179,237,.12);
+}
+.hero-ring:nth-child(1) { width: 500px; height: 500px; top: -200px; left: -100px; }
+.hero-ring:nth-child(2) { width: 360px; height: 360px; top: -80px; right: -60px; }
+.hero-ring:nth-child(3) { width: 220px; height: 220px; bottom: -60px; left: 40%; }
+
+.hero-tag {
+  display: inline-flex; align-items: center; gap: 7px;
+  background: rgba(99,179,237,.12); border: 1px solid rgba(99,179,237,.25);
+  color: #90cdf4; font-size: 11px; font-weight: 600; letter-spacing: 1.5px;
+  text-transform: uppercase; padding: 5px 14px; border-radius: 20px; margin-bottom: 20px;
+}
+.hero-tag::before { content: ''; width: 6px; height: 6px; background: #68d391; border-radius: 50%; animation: blink 1.5s infinite; }
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:.3} }
+
+.hero h1 {
+  color: #fff; font-size: clamp(22px, 4vw, 34px); font-weight: 700; line-height: 1.2; margin-bottom: 12px;
+}
+.hero h1 em { color: #63b3ed; font-style: normal; }
+.hero p { color: rgba(255,255,255,.6); font-size: 14px; max-width: 500px; margin: 0 auto 28px; line-height: 1.7; }
+
+.hero-stats {
+  display: inline-flex; gap: 24px; flex-wrap: wrap; justify-content: center;
+}
+.hero-stat {
+  background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.12);
+  border-radius: 10px; padding: 10px 18px; text-align: center;
+}
+.hero-stat .val { font-size: 18px; font-weight: 700; color: #fff; font-family: 'IBM Plex Mono', monospace; }
+.hero-stat .lbl { font-size: 10px; color: rgba(255,255,255,.5); margin-top: 2px; letter-spacing: .5px; }
+
+/* ── PROGRESS STRIP ── */
+.progress-strip {
+  background: #fff; border-bottom: 1px solid #e2e8f0;
+  padding: 0 24px; position: sticky; top: 0; z-index: 100;
+  box-shadow: 0 2px 8px rgba(0,0,0,.06);
+}
+.progress-inner {
+  max-width: 720px; margin: 0 auto;
+  display: flex; align-items: center; gap: 0;
+}
+.prog-step {
+  flex: 1; display: flex; flex-direction: column; align-items: center;
+  padding: 10px 4px; position: relative; cursor: default;
+}
+.prog-step::after {
+  content: ''; position: absolute; top: 18px; left: 50%; right: -50%;
+  height: 2px; background: #e2e8f0; z-index: -1;
+}
+.prog-step:last-child::after { display: none; }
+.prog-dot {
+  width: 28px; height: 28px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px; font-weight: 700; margin-bottom: 4px;
+  transition: all .3s; border: 2px solid #e2e8f0;
+  background: #f8fafc; color: #94a3b8;
+}
+.prog-dot.active { background: #1a2d5a; border-color: #1a2d5a; color: #fff; }
+.prog-dot.done   { background: #38a169; border-color: #38a169; color: #fff; }
+.prog-lbl { font-size: 9px; font-weight: 600; color: #94a3b8; letter-spacing: .5px; text-transform: uppercase; text-align: center; }
+.prog-lbl.active { color: #1a2d5a; }
+
+/* ── MAIN CONTAINER ── */
+.container {
+  max-width: 720px; margin: -32px auto 0; padding: 16px 16px 0;
+  position: relative; z-index: 1;
+}
+
+html { scroll-padding-top: 80px; }
+
+/* ── SECTIONS ── */
+.section {
+  background: #fff; border-radius: 16px;
+  box-shadow: 0 2px 16px rgba(0,0,0,.07);
+  margin-bottom: 16px; overflow: hidden;
+  transition: box-shadow .2s;
+  scroll-margin-top: 80px;
+}
+.section:focus-within { box-shadow: 0 4px 24px rgba(26,45,90,.13); }
+
+.section-head {
+  background: linear-gradient(135deg, #1a2d5a, #1e3a7a);
+  padding: 20px 26px; display: flex; align-items: center; gap: 14px;
+}
+.section-num {
+  width: 36px; height: 36px; border-radius: 10px;
+  background: rgba(255,255,255,.15); border: 1px solid rgba(255,255,255,.2);
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'IBM Plex Mono', monospace; font-size: 13px; font-weight: 600; color: #fff;
+  flex-shrink: 0;
+}
+.section-head-text .title { font-size: 15px; font-weight: 700; color: #fff; }
+.section-head-text .sub   { font-size: 11px; color: rgba(255,255,255,.55); margin-top: 2px; }
+
+.section-body { padding: 24px 26px; }
+
+/* ── FORM FIELDS ── */
+.field { margin-bottom: 20px; }
+.field:last-child { margin-bottom: 0; }
+
+.field label {
+  display: block; font-size: 13px; font-weight: 600; color: #1a1d2e;
+  margin-bottom: 7px; line-height: 1.5;
+}
+.field label .req { color: #e53e3e; margin-left: 2px; }
+.field label .hint { font-weight: 400; color: #718096; font-size: 11px; margin-left: 6px; }
+
+input[type="text"],
+input[type="email"],
+textarea,
+select {
+  width: 100%; padding: 11px 14px;
+  background: #f7f8fc; border: 1.5px solid #e2e8f0;
+  border-radius: 9px; font-family: 'Sora', sans-serif; font-size: 13px; color: #1a1d2e;
+  transition: all .2s; outline: none; appearance: none;
+}
+input[type="text"]:focus,
+input[type="email"]:focus,
+textarea:focus,
+select:focus {
+  border-color: #3b82f6; background: #fff;
+  box-shadow: 0 0 0 3px rgba(59,130,246,.1);
+}
+textarea { min-height: 90px; resize: vertical; line-height: 1.6; }
+select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23718096' d='M6 8L1 3h10z'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 14px center; padding-right: 36px; cursor: pointer; }
+
+/* ── RADIO GROUP ── */
+.radio-group { display: flex; flex-direction: column; gap: 8px; }
+.radio-option {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 14px; border-radius: 9px;
+  border: 1.5px solid #e2e8f0; cursor: pointer;
+  transition: all .15s; font-size: 13px; color: #4a5568;
+}
+.radio-option:hover { border-color: #3b82f6; background: #eff6ff; color: #1a2d5a; }
+.radio-option input[type="radio"] { accent-color: #1a2d5a; width: 16px; height: 16px; flex-shrink: 0; }
+.radio-option.selected { border-color: #1a2d5a; background: #eff6ff; color: #1a2d5a; font-weight: 500; }
+
+.checkbox-group { display: flex; flex-direction: column; gap: 8px; }
+.checkbox-option {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 14px; border-radius: 9px;
+  border: 1.5px solid #e2e8f0; cursor: pointer;
+  transition: all .15s; font-size: 13px; color: #4a5568;
+}
+.checkbox-option:hover { border-color: #3b82f6; background: #eff6ff; }
+.checkbox-option input[type="checkbox"] { accent-color: #1a2d5a; width: 16px; height: 16px; flex-shrink: 0; }
+
+/* ── LIKERT SCALE ── */
+.likert-grid { display: flex; flex-direction: column; gap: 14px; }
+.likert-row { }
+.likert-q {
+  font-size: 13px; font-weight: 500; color: #1a1d2e;
+  margin-bottom: 8px; line-height: 1.5;
+}
+.likert-q .qnum {
+  display: inline-block; background: #1a2d5a; color: #fff;
+  font-family: 'IBM Plex Mono', monospace; font-size: 10px; font-weight: 600;
+  padding: 1px 7px; border-radius: 4px; margin-right: 7px;
+}
+.likert-scale {
+  display: flex; gap: 6px; align-items: stretch;
+}
+.likert-labels {
+  display: flex; justify-content: space-between;
+  margin-top: 5px; padding: 0 2px;
+}
+.likert-labels span { font-size: 10px; color: #94a3b8; font-weight: 500; }
+.likert-btn {
+  flex: 1; padding: 10px 4px; border: 1.5px solid #e2e8f0;
+  border-radius: 8px; background: #f7f8fc; cursor: pointer;
+  font-family: 'IBM Plex Mono', monospace; font-size: 13px; font-weight: 600;
+  color: #94a3b8; transition: all .15s; text-align: center;
+  display: flex; flex-direction: column; align-items: center; gap: 3px;
+}
+.likert-btn:hover { border-color: #3b82f6; background: #eff6ff; color: #1a2d5a; }
+.likert-btn.selected { border-color: #1a2d5a; background: #1a2d5a; color: #fff; }
+.likert-btn .lval { font-size: 15px; }
+.likert-btn .lemoji { font-size: 12px; }
+
+/* Error state */
+.likert-row.error .likert-btn { border-color: #fed7d7; }
+.field.error input,
+.field.error select,
+.field.error textarea { border-color: #e53e3e; background: #fff5f5; }
+.err-msg { font-size: 11px; color: #e53e3e; margin-top: 5px; font-weight: 500; display: none; }
+.field.error .err-msg,
+.likert-row.error .err-msg { display: block; }
+
+/* ── SECTION DIVIDER ── */
+.divider { height: 1px; background: #f0f2f8; margin: 4px 0 20px; }
+
+/* ── SUBMIT SECTION ── */
+.submit-card {
+  background: #fff; border-radius: 16px;
+  box-shadow: 0 2px 16px rgba(0,0,0,.07);
+  padding: 30px 26px; text-align: center; margin-bottom: 16px;
+}
+.submit-card p { font-size: 13px; color: #718096; margin-bottom: 20px; line-height: 1.6; }
+
+.btn-submit {
+  display: inline-flex; align-items: center; gap: 10px;
+  background: linear-gradient(135deg, #1a2d5a, #2b5cd9);
+  color: #fff; border: none; border-radius: 12px;
+  padding: 15px 40px; font-family: 'Sora', sans-serif;
+  font-size: 15px; font-weight: 700; cursor: pointer;
+  transition: all .2s; box-shadow: 0 4px 14px rgba(26,45,90,.3);
+  width: 100%; justify-content: center;
+}
+.btn-submit:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(26,45,90,.4); }
+.btn-submit:active { transform: translateY(0); }
+.btn-submit:disabled { opacity: .6; cursor: not-allowed; transform: none; }
+.btn-submit .spinner {
+  width: 18px; height: 18px; border: 2px solid rgba(255,255,255,.3);
+  border-top-color: #fff; border-radius: 50%;
+  animation: spin .7s linear infinite; display: none;
+}
+.btn-submit.loading .spinner { display: block; }
+.btn-submit.loading .btn-text { display: none; }
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── SUCCESS ── */
+#success-screen {
+  display: none; text-align: center; padding: 60px 26px;
+  background: #fff; border-radius: 16px;
+  box-shadow: 0 2px 16px rgba(0,0,0,.07);
+}
+.success-icon {
+  width: 72px; height: 72px; border-radius: 50%;
+  background: linear-gradient(135deg, #38a169, #48bb78);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 32px; margin: 0 auto 20px;
+  box-shadow: 0 8px 24px rgba(56,161,105,.3);
+  animation: popIn .5s cubic-bezier(.175,.885,.32,1.275);
+}
+@keyframes popIn { from{transform:scale(0);opacity:0} to{transform:scale(1);opacity:1} }
+#success-screen h2 { font-size: 22px; font-weight: 700; color: #1a1d2e; margin-bottom: 10px; }
+#success-screen p  { font-size: 14px; color: #718096; line-height: 1.7; max-width: 400px; margin: 0 auto; }
+
+/* ── ERROR BANNER ── */
+#error-banner {
+  display: none; background: #fff5f5; border: 1px solid #fc8181;
+  border-radius: 10px; padding: 14px 18px; margin-bottom: 16px;
+  font-size: 13px; color: #c53030; font-weight: 500;
+}
+
+/* ── CONSENT ── */
+.consent-box {
+  background: #f0f7ff; border: 1.5px solid #bee3f8;
+  border-radius: 10px; padding: 14px 16px; margin-bottom: 20px;
+  font-size: 12px; color: #2b6cb0; line-height: 1.7;
+}
+.consent-box strong { color: #1a365d; }
+
+/* ── MOBILE ── */
+@media (max-width: 480px) {
+  .section-body { padding: 18px 16px; }
+  .hero { padding: 40px 16px 70px; }
+  .hero-stats { gap: 10px; }
+  .likert-scale { gap: 4px; }
+  .likert-btn .lemoji { display: none; }
+  .progress-inner { gap: 0; }
+  .prog-lbl { display: none; }
+}
+</style>
+</head>
+<body>
+
+<!-- ── HERO ── -->
+<div class="hero">
+  <div class="hero-rings">
+    <div class="hero-ring"></div>
+    <div class="hero-ring"></div>
+    <div class="hero-ring"></div>
+  </div>
+  <div class="hero-tag">Research Evaluation</div>
+  <h1>Olist Decision Intelligence<br><em>Dashboard Evaluation Survey</em></h1>
+  <p>Help us measure whether a prescriptive analytics dashboard is genuinely useful for non-technical marketing managers. Takes about 5 minutes.</p>
+  <div class="hero-stats">
+    <div class="hero-stat"><div class="val">5 min</div><div class="lbl">Estimated time</div></div>
+    <div class="hero-stat"><div class="val">14</div><div class="lbl">Likert questions</div></div>
+    <div class="hero-stat"><div class="val">Anonymous</div><div class="lbl">Optional name/email</div></div>
+  </div>
+</div>
+
+<!-- ── PROGRESS ── -->
+<div class="progress-strip">
+  <div class="progress-inner">
+    <div class="prog-step"><div class="prog-dot active" id="pd1">1</div><div class="prog-lbl active">About You</div></div>
+    <div class="prog-step"><div class="prog-dot" id="pd2">2</div><div class="prog-lbl">Usefulness</div></div>
+    <div class="prog-step"><div class="prog-dot" id="pd3">3</div><div class="prog-lbl">Usability</div></div>
+    <div class="prog-step"><div class="prog-dot" id="pd4">4</div><div class="prog-lbl">Trust</div></div>
+    <div class="prog-step"><div class="prog-dot" id="pd5">5</div><div class="prog-lbl">Feedback</div></div>
+  </div>
+</div>
+
+<!-- ── FORM ── -->
+<div class="container">
+  <form id="surveyForm" novalidate>
+
+    <!-- ── SECTION 1: ABOUT YOU ── -->
+    <div class="section" id="sec1">
+      <div class="section-head">
+        <div class="section-num">01</div>
+        <div class="section-head-text">
+          <div class="title">About You</div>
+          <div class="sub">Background information — helps contextualise your responses</div>
+        </div>
+      </div>
+      <div class="section-body">
+
+        <div class="consent-box">
+          <strong>Participant Information:</strong> This survey evaluates the usability and usefulness of an e-commerce prescriptive analytics dashboard built on the Olist dataset, as part of an MSc Business Analytics Final Year Project at the University of Galway. Your participation is voluntary. Name and email are optional and used only for follow-up if you consent.
+        </div>
+
+        <div class="field" id="f-name">
+          <label>Full Name <span class="hint">(optional)</span></label>
+          <input type="text" name="name" id="inp-name" placeholder="e.g. Jane Murphy" autocomplete="name">
+        </div>
+
+        <div class="field" id="f-email">
+          <label>Email Address <span class="hint">(optional — for follow-up only)</span></label>
+          <input type="email" name="email" id="inp-email" placeholder="e.g. jane@nuigalway.ie" autocomplete="email">
+        </div>
+
+        <div class="field" id="f-role">
+          <label>Programme / Role <span class="req">*</span></label>
+          <input type="text" name="role" id="inp-role" placeholder="e.g. MSc Business Analytics, Marketing Manager, Lecturer" required>
+          <div class="err-msg">Please enter your programme or role.</div>
+        </div>
+
+        <div class="field" id="f-org">
+          <label>Organisation / University <span class="req">*</span></label>
+          <input type="text" name="org" id="inp-org" placeholder="e.g. University of Galway" required>
+          <div class="err-msg">Please enter your organisation.</div>
+        </div>
+
+        <div class="field" id="f-exp">
+          <label>Experience Level <span class="req">*</span></label>
+          <select name="exp" id="inp-exp" required>
+            <option value="" disabled selected>— Select your level —</option>
+            <option>Undergraduate (BSc / BA)</option>
+            <option>Postgraduate (MSc / MBA)</option>
+            <option>PhD / Researcher</option>
+            <option>Industry Professional (1–3 years)</option>
+            <option>Industry Professional (4+ years)</option>
+            <option>Academic / Lecturer</option>
+          </select>
+          <div class="err-msg">Please select your experience level.</div>
+        </div>
+
+        <div class="field" id="f-bg">
+          <label>Do you have a data analytics background? <span class="req">*</span></label>
+          <div class="radio-group" id="rg-bg">
+            <label class="radio-option"><input type="radio" name="data_background" value="Yes, it's part of my course"> Yes — it's part of my course or job</label>
+            <label class="radio-option"><input type="radio" name="data_background" value="Some exposure but not my main focus"> Some exposure but not my main focus</label>
+            <label class="radio-option"><input type="radio" name="data_background" value="No, I'm non-technical"> No — I'm non-technical</label>
+          </div>
+          <div class="err-msg" id="err-bg">Please select an option.</div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ── SECTION 2: USEFULNESS ── -->
+    <div class="section" id="sec2">
+      <div class="section-head">
+        <div class="section-num">02</div>
+        <div class="section-head-text">
+          <div class="title">Section A — Usefulness</div>
+          <div class="sub">Rate each statement 1 (Strongly Disagree) → 5 (Strongly Agree)</div>
+        </div>
+      </div>
+      <div class="section-body">
+
+        <div class="likert-legend" style="display:flex;justify-content:space-between;font-size:11px;color:#94a3b8;font-weight:600;margin-bottom:16px;padding:0 2px">
+          <span>1 = Strongly Disagree</span>
+          <span>5 = Strongly Agree</span>
+        </div>
+
+        <div class="likert-grid">
+          <div class="likert-row" id="lr-blockA_Q1">
+            <div class="likert-q"><span class="qnum">Q1</span>This dashboard helps me decide which customers need attention right now.</div>
+            <div class="likert-scale" data-field="blockA_Q1">
+              <button type="button" class="likert-btn" data-val="1"><div class="lval">1</div><div class="lemoji">😞</div></button>
+              <button type="button" class="likert-btn" data-val="2"><div class="lval">2</div><div class="lemoji">🙁</div></button>
+              <button type="button" class="likert-btn" data-val="3"><div class="lval">3</div><div class="lemoji">😐</div></button>
+              <button type="button" class="likert-btn" data-val="4"><div class="lval">4</div><div class="lemoji">🙂</div></button>
+              <button type="button" class="likert-btn" data-val="5"><div class="lval">5</div><div class="lemoji">😃</div></button>
+            </div>
+            <div class="err-msg">Please select a rating.</div>
+          </div>
+
+          <div class="divider"></div>
+
+          <div class="likert-row" id="lr-blockA_Q2">
+            <div class="likert-q"><span class="qnum">Q2</span>It saves time compared to manually reviewing customer data.</div>
+            <div class="likert-scale" data-field="blockA_Q2">
+              <button type="button" class="likert-btn" data-val="1"><div class="lval">1</div><div class="lemoji">😞</div></button>
+              <button type="button" class="likert-btn" data-val="2"><div class="lval">2</div><div class="lemoji">🙁</div></button>
+              <button type="button" class="likert-btn" data-val="3"><div class="lval">3</div><div class="lemoji">😐</div></button>
+              <button type="button" class="likert-btn" data-val="4"><div class="lval">4</div><div class="lemoji">🙂</div></button>
+              <button type="button" class="likert-btn" data-val="5"><div class="lval">5</div><div class="lemoji">😃</div></button>
+            </div>
+            <div class="err-msg">Please select a rating.</div>
+          </div>
+
+          <div class="divider"></div>
+
+          <div class="likert-row" id="lr-blockA_Q3">
+            <div class="likert-q"><span class="qnum">Q3</span>The recommended actions (e.g. "Send 15% win-back voucher") are clear and actionable.</div>
+            <div class="likert-scale" data-field="blockA_Q3">
+              <button type="button" class="likert-btn" data-val="1"><div class="lval">1</div><div class="lemoji">😞</div></button>
+              <button type="button" class="likert-btn" data-val="2"><div class="lval">2</div><div class="lemoji">🙁</div></button>
+              <button type="button" class="likert-btn" data-val="3"><div class="lval">3</div><div class="lemoji">😐</div></button>
+              <button type="button" class="likert-btn" data-val="4"><div class="lval">4</div><div class="lemoji">🙂</div></button>
+              <button type="button" class="likert-btn" data-val="5"><div class="lval">5</div><div class="lemoji">😃</div></button>
+            </div>
+            <div class="err-msg">Please select a rating.</div>
+          </div>
+
+          <div class="divider"></div>
+
+          <div class="likert-row" id="lr-blockA_Q4">
+            <div class="likert-q"><span class="qnum">Q4</span>The customer funnel view clearly shows where customers are dropping off.</div>
+            <div class="likert-scale" data-field="blockA_Q4">
+              <button type="button" class="likert-btn" data-val="1"><div class="lval">1</div><div class="lemoji">😞</div></button>
+              <button type="button" class="likert-btn" data-val="2"><div class="lval">2</div><div class="lemoji">🙁</div></button>
+              <button type="button" class="likert-btn" data-val="3"><div class="lval">3</div><div class="lemoji">😐</div></button>
+              <button type="button" class="likert-btn" data-val="4"><div class="lval">4</div><div class="lemoji">🙂</div></button>
+              <button type="button" class="likert-btn" data-val="5"><div class="lval">5</div><div class="lemoji">😃</div></button>
+            </div>
+            <div class="err-msg">Please select a rating.</div>
+          </div>
+
+          <div class="divider"></div>
+
+          <div class="likert-row" id="lr-blockA_Q5">
+            <div class="likert-q"><span class="qnum">Q5</span>I could see myself (or a marketing manager) using this dashboard regularly.</div>
+            <div class="likert-scale" data-field="blockA_Q5">
+              <button type="button" class="likert-btn" data-val="1"><div class="lval">1</div><div class="lemoji">😞</div></button>
+              <button type="button" class="likert-btn" data-val="2"><div class="lval">2</div><div class="lemoji">🙁</div></button>
+              <button type="button" class="likert-btn" data-val="3"><div class="lval">3</div><div class="lemoji">😐</div></button>
+              <button type="button" class="likert-btn" data-val="4"><div class="lval">4</div><div class="lemoji">🙂</div></button>
+              <button type="button" class="likert-btn" data-val="5"><div class="lval">5</div><div class="lemoji">😃</div></button>
+            </div>
+            <div class="err-msg">Please select a rating.</div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ── SECTION 3: USABILITY ── -->
+    <div class="section" id="sec3">
+      <div class="section-head">
+        <div class="section-num">03</div>
+        <div class="section-head-text">
+          <div class="title">Section B — Usability</div>
+          <div class="sub">Rate each statement 1 (Strongly Disagree) → 5 (Strongly Agree)</div>
+        </div>
+      </div>
+      <div class="section-body">
+
+        <div class="likert-legend" style="display:flex;justify-content:space-between;font-size:11px;color:#94a3b8;font-weight:600;margin-bottom:16px;padding:0 2px">
+          <span>1 = Strongly Disagree</span>
+          <span>5 = Strongly Agree</span>
+        </div>
+
+        <div class="likert-grid">
+          <div class="likert-row" id="lr-blockB_Q6">
+            <div class="likert-q"><span class="qnum">Q6</span>I understood what each dashboard page was showing without being told.</div>
+            <div class="likert-scale" data-field="blockB_Q6">
+              <button type="button" class="likert-btn" data-val="1"><div class="lval">1</div></button>
+              <button type="button" class="likert-btn" data-val="2"><div class="lval">2</div></button>
+              <button type="button" class="likert-btn" data-val="3"><div class="lval">3</div></button>
+              <button type="button" class="likert-btn" data-val="4"><div class="lval">4</div></button>
+              <button type="button" class="likert-btn" data-val="5"><div class="lval">5</div></button>
+            </div>
+            <div class="err-msg">Please select a rating.</div>
+          </div>
+
+          <div class="divider"></div>
+
+          <div class="likert-row" id="lr-blockB_Q7">
+            <div class="likert-q"><span class="qnum">Q7</span>I could find the information I was looking for without needing help.</div>
+            <div class="likert-scale" data-field="blockB_Q7">
+              <button type="button" class="likert-btn" data-val="1"><div class="lval">1</div></button>
+              <button type="button" class="likert-btn" data-val="2"><div class="lval">2</div></button>
+              <button type="button" class="likert-btn" data-val="3"><div class="lval">3</div></button>
+              <button type="button" class="likert-btn" data-val="4"><div class="lval">4</div></button>
+              <button type="button" class="likert-btn" data-val="5"><div class="lval">5</div></button>
+            </div>
+            <div class="err-msg">Please select a rating.</div>
+          </div>
+
+          <div class="divider"></div>
+
+          <div class="likert-row" id="lr-blockB_Q8">
+            <div class="likert-q"><span class="qnum">Q8</span>The labels and descriptions are written in plain, non-technical language.</div>
+            <div class="likert-scale" data-field="blockB_Q8">
+              <button type="button" class="likert-btn" data-val="1"><div class="lval">1</div></button>
+              <button type="button" class="likert-btn" data-val="2"><div class="lval">2</div></button>
+              <button type="button" class="likert-btn" data-val="3"><div class="lval">3</div></button>
+              <button type="button" class="likert-btn" data-val="4"><div class="lval">4</div></button>
+              <button type="button" class="likert-btn" data-val="5"><div class="lval">5</div></button>
+            </div>
+            <div class="err-msg">Please select a rating.</div>
+          </div>
+
+          <div class="divider"></div>
+
+          <div class="likert-row" id="lr-blockB_Q9">
+            <div class="likert-q"><span class="qnum">Q9</span>The churn probability score (0–100%) made intuitive sense to me.</div>
+            <div class="likert-scale" data-field="blockB_Q9">
+              <button type="button" class="likert-btn" data-val="1"><div class="lval">1</div></button>
+              <button type="button" class="likert-btn" data-val="2"><div class="lval">2</div></button>
+              <button type="button" class="likert-btn" data-val="3"><div class="lval">3</div></button>
+              <button type="button" class="likert-btn" data-val="4"><div class="lval">4</div></button>
+              <button type="button" class="likert-btn" data-val="5"><div class="lval">5</div></button>
+            </div>
+            <div class="err-msg">Please select a rating.</div>
+          </div>
+
+          <div class="divider"></div>
+
+          <div class="likert-row" id="lr-blockB_Q10">
+            <div class="likert-q"><span class="qnum">Q10</span>The dashboard doesn't feel cluttered — the layout is clean and easy to scan.</div>
+            <div class="likert-scale" data-field="blockB_Q10">
+              <button type="button" class="likert-btn" data-val="1"><div class="lval">1</div></button>
+              <button type="button" class="likert-btn" data-val="2"><div class="lval">2</div></button>
+              <button type="button" class="likert-btn" data-val="3"><div class="lval">3</div></button>
+              <button type="button" class="likert-btn" data-val="4"><div class="lval">4</div></button>
+              <button type="button" class="likert-btn" data-val="5"><div class="lval">5</div></button>
+            </div>
+            <div class="err-msg">Please select a rating.</div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ── SECTION 4: TRUST ── -->
+    <div class="section" id="sec4">
+      <div class="section-head">
+        <div class="section-num">04</div>
+        <div class="section-head-text">
+          <div class="title">Section C — Trust & Confidence</div>
+          <div class="sub">Rate each statement 1 (Strongly Disagree) → 5 (Strongly Agree)</div>
+        </div>
+      </div>
+      <div class="section-body">
+
+        <div class="likert-legend" style="display:flex;justify-content:space-between;font-size:11px;color:#94a3b8;font-weight:600;margin-bottom:16px;padding:0 2px">
+          <span>1 = Strongly Disagree</span>
+          <span>5 = Strongly Agree</span>
+        </div>
+
+        <div class="likert-grid">
+          <div class="likert-row" id="lr-blockC_Q11">
+            <div class="likert-q"><span class="qnum">Q11</span>Seeing the model's accuracy stats (e.g. AUC-ROC: 0.87) increased my confidence in the recommendations.</div>
+            <div class="likert-scale" data-field="blockC_Q11">
+              <button type="button" class="likert-btn" data-val="1"><div class="lval">1</div></button>
+              <button type="button" class="likert-btn" data-val="2"><div class="lval">2</div></button>
+              <button type="button" class="likert-btn" data-val="3"><div class="lval">3</div></button>
+              <button type="button" class="likert-btn" data-val="4"><div class="lval">4</div></button>
+              <button type="button" class="likert-btn" data-val="5"><div class="lval">5</div></button>
+            </div>
+            <div class="err-msg">Please select a rating.</div>
+          </div>
+
+          <div class="divider"></div>
+
+          <div class="likert-row" id="lr-blockC_Q12">
+            <div class="likert-q"><span class="qnum">Q12</span>I trust the recommended action shown on the dashboard enough to act on it.</div>
+            <div class="likert-scale" data-field="blockC_Q12">
+              <button type="button" class="likert-btn" data-val="1"><div class="lval">1</div></button>
+              <button type="button" class="likert-btn" data-val="2"><div class="lval">2</div></button>
+              <button type="button" class="likert-btn" data-val="3"><div class="lval">3</div></button>
+              <button type="button" class="likert-btn" data-val="4"><div class="lval">4</div></button>
+              <button type="button" class="likert-btn" data-val="5"><div class="lval">5</div></button>
+            </div>
+            <div class="err-msg">Please select a rating.</div>
+          </div>
+
+          <div class="divider"></div>
+
+          <div class="likert-row" id="lr-blockC_Q13">
+            <div class="likert-q"><span class="qnum">Q13</span>Knowing which factor drove the churn score (e.g. "low review rating") makes it easier to act.</div>
+            <div class="likert-scale" data-field="blockC_Q13">
+              <button type="button" class="likert-btn" data-val="1"><div class="lval">1</div></button>
+              <button type="button" class="likert-btn" data-val="2"><div class="lval">2</div></button>
+              <button type="button" class="likert-btn" data-val="3"><div class="lval">3</div></button>
+              <button type="button" class="likert-btn" data-val="4"><div class="lval">4</div></button>
+              <button type="button" class="likert-btn" data-val="5"><div class="lval">5</div></button>
+            </div>
+            <div class="err-msg">Please select a rating.</div>
+          </div>
+
+          <div class="divider"></div>
+
+          <div class="likert-row" id="lr-blockC_Q14">
+            <div class="likert-q"><span class="qnum">Q14</span>I would feel comfortable showing this dashboard to a manager, colleague, or lecturer.</div>
+            <div class="likert-scale" data-field="blockC_Q14">
+              <button type="button" class="likert-btn" data-val="1"><div class="lval">1</div></button>
+              <button type="button" class="likert-btn" data-val="2"><div class="lval">2</div></button>
+              <button type="button" class="likert-btn" data-val="3"><div class="lval">3</div></button>
+              <button type="button" class="likert-btn" data-val="4"><div class="lval">4</div></button>
+              <button type="button" class="likert-btn" data-val="5"><div class="lval">5</div></button>
+            </div>
+            <div class="err-msg">Please select a rating.</div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ── SECTION 5: OPEN FEEDBACK ── -->
+    <div class="section" id="sec5">
+      <div class="section-head">
+        <div class="section-num">05</div>
+        <div class="section-head-text">
+          <div class="title">Open Feedback</div>
+          <div class="sub">Your honest thoughts — these are the most valuable responses</div>
+        </div>
+      </div>
+      <div class="section-body">
+
+        <div class="field" id="f-q15">
+          <label>What was the most surprising or interesting thing about the dashboard? <span class="req">*</span></label>
+          <textarea name="q15_surprising" id="inp-q15" placeholder="e.g. I didn't expect the funnel to show such a big drop-off between acquisition and retention..." required></textarea>
+          <div class="err-msg">Please share your thoughts — even a sentence is helpful.</div>
+        </div>
+
+        <div class="field" id="f-q16">
+          <label>If you could change or add one thing, what would it be? <span class="req">*</span></label>
+          <textarea name="q16_change" id="inp-q16" placeholder="e.g. I'd add a filter by product category so I could see which products drive churn..." required></textarea>
+          <div class="err-msg">Please share your suggestion — even a sentence is helpful.</div>
+        </div>
+
+        <div class="field" id="f-comments">
+          <label>Any other comments? <span class="hint">(optional)</span></label>
+          <textarea name="comments" id="inp-comments" placeholder="Anything else you'd like to share about your experience with the dashboard..."></textarea>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ── SUBMIT ── -->
+    <div id="error-banner">⚠️ <span id="err-text">Please fix the errors above before submitting.</span></div>
+
+    <div class="submit-card">
+      <p>Thank you for taking the time to evaluate the Olist Dashboard. Your response will be used in the research findings of this MSc Final Year Project.</p>
+      <button type="submit" class="btn-submit" id="submitBtn">
+        <div class="spinner"></div>
+        <span class="btn-text">Submit Response →</span>
+      </button>
+    </div>
+
+    <!-- ── SUCCESS ── -->
+    <div id="success-screen">
+      <div class="success-icon">✓</div>
+      <h2>Response Submitted!</h2>
+      <p>Thank you — your feedback has been recorded. It will directly contribute to the research findings on prescriptive analytics dashboards for e-commerce managers.</p>
+    </div>
+
+  </form>
+</div>
+
+<script>
+// ── CONFIG — paste your Web App URL here ──────────────────────
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwFe2mTW66287g_b3quNfp1a4sXGATFuY3q4J6npdHxEGgPkE30cZHbbqEBWH--R692Og/exec';
+// ─────────────────────────────────────────────────────────────
+
+// ── LIKERT BUTTONS ────────────────────────────────────────────
+document.querySelectorAll('.likert-scale').forEach(scale => {
+  scale.querySelectorAll('.likert-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      scale.querySelectorAll('.likert-btn').forEach(b => b.classList.remove('selected'));
+      btn.classList.add('selected');
+      // Clear error state
+      const row = scale.closest('.likert-row');
+      if (row) row.classList.remove('error');
+      updateProgress();
+    });
+  });
+});
+
+// ── RADIO HIGHLIGHT ───────────────────────────────────────────
+document.querySelectorAll('.radio-option').forEach(opt => {
+  opt.addEventListener('click', () => {
+    const name = opt.querySelector('input').name;
+    document.querySelectorAll(`.radio-option input[name="${name}"]`).forEach(r => {
+      r.closest('.radio-option').classList.remove('selected');
+    });
+    opt.classList.add('selected');
+    document.getElementById('err-bg').style.display = 'none';
+    updateProgress();
+  });
+});
+
+// ── PROGRESS DOTS ─────────────────────────────────────────────
+function updateProgress() {
+  const sections = [
+    { dot: 'pd1', filled: isSection1Done() },
+    { dot: 'pd2', filled: isSectionLikertDone('A') },
+    { dot: 'pd3', filled: isSectionLikertDone('B') },
+    { dot: 'pd4', filled: isSectionLikertDone('C') },
+    { dot: 'pd5', filled: isSection5Done() },
+  ];
+  let lastActive = 0;
+  sections.forEach((s, i) => {
+    const dot = document.getElementById(s.dot);
+    const lbl = dot.nextElementSibling;
+    if (s.filled) {
+      dot.classList.remove('active'); dot.classList.add('done');
+      dot.textContent = '✓'; lbl.classList.remove('active');
+      lastActive = i + 1;
+    } else {
+      dot.classList.remove('done');
+      dot.textContent = i + 1;
+    }
+  });
+  const next = document.getElementById('pd' + (lastActive + 1));
+  if (next) { next.classList.add('active'); next.nextElementSibling.classList.add('active'); }
+}
+
+function isSection1Done() {
+  return document.getElementById('inp-role').value.trim() &&
+         document.getElementById('inp-org').value.trim() &&
+         document.getElementById('inp-exp').value &&
+         document.querySelector('input[name="data_background"]:checked');
+}
+function isSectionLikertDone(block) {
+  const prefix = `block${block}_Q`;
+  const scales = document.querySelectorAll(`.likert-scale[data-field^="${prefix}"]`);
+  return [...scales].every(s => s.querySelector('.likert-btn.selected'));
+}
+function isSection5Done() {
+  return document.getElementById('inp-q15').value.trim() &&
+         document.getElementById('inp-q16').value.trim();
+}
+
+// ── VALIDATION ────────────────────────────────────────────────
+function validate() {
+  let ok = true;
+
+  // Section 1 required fields
+  ['f-role','f-org','f-exp'].forEach(id => {
+    const field = document.getElementById(id);
+    const input = field.querySelector('input,select');
+    if (!input.value.trim()) { field.classList.add('error'); ok = false; }
+    else field.classList.remove('error');
+  });
+
+  if (!document.querySelector('input[name="data_background"]:checked')) {
+    document.getElementById('err-bg').style.display = 'block';
+    ok = false;
+  } else {
+    document.getElementById('err-bg').style.display = 'none';
+  }
+
+  // All Likert rows
+  const likertFields = [
+    'blockA_Q1','blockA_Q2','blockA_Q3','blockA_Q4','blockA_Q5',
+    'blockB_Q6','blockB_Q7','blockB_Q8','blockB_Q9','blockB_Q10',
+    'blockC_Q11','blockC_Q12','blockC_Q13','blockC_Q14'
+  ];
+  likertFields.forEach(f => {
+    const scale = document.querySelector(`.likert-scale[data-field="${f}"]`);
+    const row   = document.getElementById(`lr-${f}`);
+    if (!scale.querySelector('.likert-btn.selected')) {
+      row.classList.add('error'); ok = false;
+    } else {
+      row.classList.remove('error');
+    }
+  });
+
+  // Open text required
+  ['f-q15','f-q16'].forEach(id => {
+    const field = document.getElementById(id);
+    const ta = field.querySelector('textarea');
+    if (!ta.value.trim()) { field.classList.add('error'); ok = false; }
+    else field.classList.remove('error');
+  });
+
+  return ok;
+}
+
+// ── SUBMIT ────────────────────────────────────────────────────
+document.getElementById('surveyForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+
+  if (!validate()) {
+    const errBanner = document.getElementById('error-banner');
+    errBanner.style.display = 'block';
+    // Scroll to first error
+    const firstErr = document.querySelector('.section .error, .likert-row.error');
+    if (firstErr) firstErr.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    return;
+  }
+
+  document.getElementById('error-banner').style.display = 'none';
+
+  const btn = document.getElementById('submitBtn');
+  btn.classList.add('loading');
+  btn.disabled = true;
+
+  // ── Collect all field values ──
+  const getValue = field => {
+    const scale = document.querySelector(`.likert-scale[data-field="${field}"]`);
+    const sel = scale ? scale.querySelector('.likert-btn.selected') : null;
+    return sel ? sel.dataset.val : '';
+  };
+
+  const payload = {
+    timestamp:        new Date().toISOString(),
+    name:             document.getElementById('inp-name').value.trim(),
+    email:            document.getElementById('inp-email').value.trim(),
+    role:             document.getElementById('inp-role').value.trim(),
+    org:              document.getElementById('inp-org').value.trim(),
+    exp:              document.getElementById('inp-exp').value,
+    data_background:  (document.querySelector('input[name="data_background"]:checked') || {}).value || '',
+    // Section A — Usefulness
+    blockA_Q1: getValue('blockA_Q1'),
+    blockA_Q2: getValue('blockA_Q2'),
+    blockA_Q3: getValue('blockA_Q3'),
+    blockA_Q4: getValue('blockA_Q4'),
+    blockA_Q5: getValue('blockA_Q5'),
+    // Section B — Usability
+    blockB_Q6:  getValue('blockB_Q6'),
+    blockB_Q7:  getValue('blockB_Q7'),
+    blockB_Q8:  getValue('blockB_Q8'),
+    blockB_Q9:  getValue('blockB_Q9'),
+    blockB_Q10: getValue('blockB_Q10'),
+    // Section C — Trust
+    blockC_Q11: getValue('blockC_Q11'),
+    blockC_Q12: getValue('blockC_Q12'),
+    blockC_Q13: getValue('blockC_Q13'),
+    blockC_Q14: getValue('blockC_Q14'),
+    // Open text
+    q15_surprising: document.getElementById('inp-q15').value.trim(),
+    q16_change:     document.getElementById('inp-q16').value.trim(),
+    comments:       document.getElementById('inp-comments').value.trim(),
+  };
+
+  try {
+    await fetch(APPS_SCRIPT_URL, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+
+    // Show success (no-cors means we can't read the response, but if no error = sent)
+    document.getElementById('surveyForm').style.display = 'none';
+    document.getElementById('success-screen').style.display = 'block';
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+
+  } catch (err) {
+    btn.classList.remove('loading');
+    btn.disabled = false;
+    const errBanner = document.getElementById('error-banner');
+    document.getElementById('err-text').textContent = 'Submission failed — check your internet connection and try again. Error: ' + err.message;
+    errBanner.style.display = 'block';
+  }
+});
+
+// ── INPUT CLEAR ERRORS ────────────────────────────────────────
+['inp-role','inp-org','inp-exp'].forEach(id => {
+  document.getElementById(id).addEventListener('input', () => {
+    document.getElementById('f-' + id.replace('inp-','')).classList.remove('error');
+    updateProgress();
+  });
+});
+['inp-q15','inp-q16'].forEach(id => {
+  document.getElementById(id).addEventListener('input', () => {
+    const fid = id === 'inp-q15' ? 'f-q15' : 'f-q16';
+    document.getElementById(fid).classList.remove('error');
+    updateProgress();
+  });
+});
+</script>
+</body>
+</html>
